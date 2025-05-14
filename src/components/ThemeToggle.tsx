@@ -1,6 +1,5 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { FaSun, FaMoon } from 'react-icons/fa';
 
 interface ThemeToggleProps {
   darkMode: boolean;
@@ -16,9 +15,9 @@ export default function ThemeToggle({ darkMode, setDarkMode }: ThemeToggleProps)
       whileTap={{ scale: 0.95 }}
     >
       {darkMode ? (
-        <SunIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+        <FaSun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
       ) : (
-        <MoonIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+        <FaMoon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
       )}
     </motion.button>
   );

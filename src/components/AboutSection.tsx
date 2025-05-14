@@ -1,15 +1,4 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FaLinux,
-  FaPython,
-  FaReact,
-  FaTerminal,
-  FaJs
-} from 'react-icons/fa';
-import { 
-  SiPostman
-} from 'react-icons/si';
 
 interface AboutSectionProps {
   darkMode: boolean;
@@ -23,15 +12,6 @@ const fadeInUp = {
     transition: { duration: 0.6 }
   }
 };
-
-const techStack = [
-  { name: 'Linux', icon: FaLinux, color: 'text-black dark:text-white' },
-  { name: 'Bash', icon: FaTerminal, color: 'text-emerald-500' },
-  { name: 'Python', icon: FaPython, color: 'text-blue-600' },
-  { name: 'Postman', icon: SiPostman, color: 'text-orange-500' },
-  { name: 'React', icon: FaReact, color: 'text-cyan-400' },
-  { name: 'JavaScript', icon: FaJs, color: 'text-yellow-400' },
-];
 
 export default function AboutSection({ darkMode }: AboutSectionProps) {
   return (

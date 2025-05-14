@@ -18,11 +18,7 @@ const navItems = [
   { name: 'Contact', icon: EnvelopeIcon, href: '#contact' },
 ];
 
-interface NavigationProps {
-  setDarkMode: (darkMode: boolean) => void;
-}
-
-export default function Navigation({ setDarkMode }: NavigationProps) {
+export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
 
