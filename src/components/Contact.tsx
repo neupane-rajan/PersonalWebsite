@@ -32,7 +32,7 @@ export default function Contact() {
         <div className="space-y-8">
           {/* Email */}
           <motion.a
-            href="mailto:your.email@example.com"
+            href="mailto:rajanneupane@202gmail.com"
             className="flex items-center space-x-4 group p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
             whileHover={{ x: 5 }}
             transition={{ duration: 0.2 }}
@@ -43,7 +43,7 @@ export default function Contact() {
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
               <p className="text-gray-900 dark:text-white group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors duration-200">
-                your.email@example.com
+                rajanneupane202@gmail.com
               </p>
             </div>
           </motion.a>
@@ -53,7 +53,7 @@ export default function Contact() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center">Follow me on social media</p>
             <div className="flex justify-center space-x-6">
               <motion.a
-                href="https://github.com/yourusername"
+                href="https://github.com/neupane-rajan"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1 }}
