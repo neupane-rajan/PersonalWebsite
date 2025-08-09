@@ -245,7 +245,7 @@ function App() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Location</p>
-                            <p className="text-sm sm:text-base text-gray-900 dark:text-white">Bangalore, India</p>
+                            <p className="text-sm sm:text-base text-gray-900 dark:text-white">Kathmandu, Nepal</p>
                     </div>
                   </div>
                         <div className="flex items-center space-x-3 sm:space-x-4">
