@@ -80,7 +80,7 @@ export default function AboutSection({ darkMode }: AboutSectionProps) {
             >
               <div className="space-y-4 sm:space-y-6 text-gray-600 dark:text-gray-300">
                 <p className="leading-relaxed text-base sm:text-lg">
-                  My journey in tech bgin with self learning  and pursue my passion for programming. 
+                  My journey in tech begin with self learning  and pursue my passion for programming. 
                   The first and half year was challenging - I found myself stuck in tutorial hell, jumping from one course to another without 
                   making real progress.
                 </p>
