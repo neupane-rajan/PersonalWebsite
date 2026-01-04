@@ -5,30 +5,21 @@ import {
   FaTasks,
   FaReact,
   FaPython,
-  FaGithub
+  FaGithub,
+  FaExternalLinkAlt
 } from 'react-icons/fa';
 import { SiTailwindcss, SiDjango } from 'react-icons/si';
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.6 }
-  }
-};
 
 const projects = [
   {
     title: "Airline Reservation System",
     description: "A full-stack web application for managing airline reservations with real-time updates and user authentication.",
     icon: FaPlane,
-    iconColor: "text-blue-500",
-    gradient: "from-blue-500 to-cyan-400",
+    iconColor: "text-ctp-blue",
     tech: [
-      { name: 'React', icon: FaReact, color: 'text-cyan-400' },
-      { name: 'Django', icon: SiDjango, color: 'text-green-600' },
-      { name: 'Tailwind', icon: SiTailwindcss, color: 'text-blue-400' }
+      { name: 'React', icon: FaReact, color: 'text-ctp-teal' },
+      { name: 'Django', icon: SiDjango, color: 'text-ctp-green' },
+      { name: 'Tailwind', icon: SiTailwindcss, color: 'text-ctp-blue' }
     ],
     github: "https://github.com/neupane-rajan/airline-reservation"
   },
@@ -36,10 +27,9 @@ const projects = [
     title: "CLI Task Manager",
     description: "A command-line task management tool built with Python, featuring task creation, tracking, and organization.",
     icon: FaTasks,
-    iconColor: "text-purple-500",
-    gradient: "from-purple-500 to-pink-500",
+    iconColor: "text-ctp-mauve",
     tech: [
-      { name: 'Python', icon: FaPython, color: 'text-blue-500' }
+      { name: 'Python', icon: FaPython, color: 'text-ctp-yellow' }
     ],
     github: "https://github.com/neupane-rajan/CLI-Task-Manager"
   },
@@ -47,90 +37,105 @@ const projects = [
     title: "Cosmic Terminal Theme Pack",
     description: "A collection of beautiful terminal themes for kitty and fish shell, featuring space and nature-inspired designs.",
     icon: FaTerminal,
-    iconColor: "text-indigo-500",
-    gradient: "from-indigo-500 to-purple-500",
+    iconColor: "text-ctp-pink",
     tech: [
-      { name: 'Shell', icon: FaTerminal, color: 'text-emerald-500' }
+      { name: 'Shell', icon: FaTerminal, color: 'text-ctp-green' }
     ],
     github: "https://github.com/neupane-rajan/cosmic-terminal-theme-pack"
   }
 ];
 
-const ProjectCard = ({ project, index }: { project: typeof projects[0], index: number }) => {
-  const Icon = project.icon;
-  
+export default function ProjectsSection() {
   return (
-    <motion.div
-      className="group relative"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.2 }}
-    >
-      <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl blur-xl ${project.gradient}`} />
-      <div className="relative p-4 sm:p-6 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50 h-full">
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <div className={project.iconColor}>
-            <Icon size={24} className="sm:w-8 sm:h-8" />
-          </div>
-          <a 
-            href={project.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-          >
-            <FaGithub size={18} className="sm:w-5 sm:h-5" />
-          </a>
-        </div>
-        <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 tech-font">{project.title}</h3>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">{project.description}</p>
-        <div className="flex flex-wrap gap-2">
-          {project.tech.map((tech) => {
-            const TechIcon = tech.icon;
+    <section id="projects" className="w-full px-4 sm:px-8 py-12">
+      <div className="w-full max-w-7xl mx-auto">
+        {/* Projects Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {projects.map((project, index) => {
+            const Icon = project.icon;
             return (
-              <span 
-                key={tech.name}
-                className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700"
+              <motion.div
+                key={project.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-ctp-mantle border-2 border-ctp-surface0 rounded-lg overflow-hidden shadow-2xl relative group"
               >
-                <div className={`mr-1 ${tech.color}`}>
-                  <TechIcon size={12} className="sm:w-3 sm:h-3" />
+                {/* Hyprland-style animated border glow */}
+                <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="absolute inset-0 rounded-lg border-2 border-ctp-teal/50 animate-pulse" />
+                  <div className="absolute inset-0 rounded-lg shadow-[0_0_15px_rgba(148,226,213,0.3)]" />
                 </div>
-                {tech.name}
-              </span>
+
+                {/* Window Title Bar */}
+                <div className="bg-ctp-crust px-3 py-1.5 flex items-center justify-between border-b border-ctp-surface0">
+                  <div className="flex items-center space-x-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-ctp-red"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-ctp-yellow"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-ctp-green"></div>
+                  </div>
+                  <div className="text-ctp-subtext0 text-[10px] font-mono">~/projects/{project.title.toLowerCase().replace(/\s+/g, '-')}</div>
+                  <div className="w-12"></div>
+                </div>
+
+                {/* Project Content */}
+                <div className="p-4 space-y-3">
+                  {/* Header */}
+                  <div className="flex items-start justify-between">
+                    <div className={`${project.iconColor}`}>
+                      <Icon size={24} />
+                    </div>
+                    <a 
+                      href={project.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded bg-ctp-surface0 text-ctp-subtext0 hover:bg-ctp-surface1 hover:text-ctp-teal transition-colors"
+                    >
+                      <FaGithub size={14} />
+                    </a>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-base font-bold text-ctp-text font-mono">{project.title}</h3>
+
+                  {/* Description */}
+                  <p className="text-xs text-ctp-subtext0 leading-relaxed">{project.description}</p>
+
+                  {/* Tech Stack */}
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {project.tech.map((tech) => {
+                      const TechIcon = tech.icon;
+                      return (
+                        <span 
+                          key={tech.name}
+                          className="inline-flex items-center px-2 py-1 rounded bg-ctp-surface0 border border-ctp-surface1 text-[10px] font-mono"
+                        >
+                          <div className={`mr-1 ${tech.color}`}>
+                            <TechIcon size={10} />
+                          </div>
+                          <span className="text-ctp-text">{tech.name}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  {/* View Project Link */}
+                  <a
+                    href={project.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-ctp-teal hover:bg-ctp-teal/90 text-ctp-base font-mono font-semibold text-[10px] rounded transition-all mt-2"
+                  >
+                    <span>View Project</span>
+                    <FaExternalLinkAlt size={8} />
+                  </a>
+                </div>
+              </motion.div>
             );
           })}
         </div>
       </div>
-    </motion.div>
+    </section>
   );
-};
-
-export default function ProjectsSection() {
-  return (
-    <motion.section 
-      id="projects" 
-      className="min-h-screen w-full px-4 sm:px-8 py-20 bg-transparent lg:ml-16 sm:ml-20 md:ml-24"
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={fadeInUp}
-    >
-      <div className="w-full max-w-6xl mx-auto">
-        <div className="text-center mb-8 sm:mb-16">
-          <motion.span 
-            className="px-3 py-1 bg-indigo-100/80 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-medium rounded-full text-sm inline-block tech-font"
-            whileHover={{ scale: 1.05 }}
-          >
-            PROJECTS
-          </motion.span>
-          <h2 className="text-2xl sm:text-3xl font-bold dark:text-white mt-4 tech-font">Featured Works</h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-          {projects.map((project, index) => (
-            <ProjectCard key={project.title} project={project} index={index} />
-          ))}
-        </div>
-      </div>
-    </motion.section>
-  );
-} 
+}

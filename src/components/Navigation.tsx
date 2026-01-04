@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   HomeIcon, 
   UserIcon, 
@@ -7,20 +6,22 @@ import {
   WrenchScrewdriverIcon, 
   EnvelopeIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 
 const navItems = [
-  { name: 'Home', icon: HomeIcon, href: '#home' },
-  { name: 'About', icon: UserIcon, href: '#about' },
-  { name: 'Projects', icon: CodeBracketIcon, href: '#projects' },
-  { name: 'Skills', icon: WrenchScrewdriverIcon, href: '#skills' },
-  { name: 'Contact', icon: EnvelopeIcon, href: '#contact' },
+  { name: 'Home', icon: HomeIcon, href: '#home', workspace: '1' },
+  { name: 'About', icon: UserIcon, href: '#about', workspace: '2' },
+  { name: 'Projects', icon: CodeBracketIcon, href: '#projects', workspace: '3' },
+  { name: 'Skills', icon: WrenchScrewdriverIcon, href: '#skills', workspace: '4' },
+  { name: 'Contact', icon: EnvelopeIcon, href: '#contact', workspace: '5' },
 ];
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,121 +41,131 @@ export default function Navigation() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Check initial position
+    handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+  };
+
   return (
     <>
-      {/* Mobile Menu Button - Only visible on mobile */}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-[10000] p-2.5 rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:border-gray-300/50 dark:hover:border-gray-600/50 transition-colors lg:hidden"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        {isOpen ? (
-          <XMarkIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-        ) : (
-          <Bars3Icon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-        )}
-      </motion.button>
+      {/* Enhanced Waybar-style Top Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-[9999] bg-ctp-crust/95 backdrop-blur-sm border-b border-ctp-surface0">
+        <div className="max-w-full px-3">
+          <div className="flex items-center justify-between h-10">
+            
+            {/* Left Module - Logo */}
+            <div className="flex items-center space-x-2">
+              <a
+                href="#home"
+                className="px-3 py-1.5 bg-ctp-surface0 text-ctp-teal hover:bg-ctp-surface1 transition-colors font-mono font-semibold text-sm rounded"
+              >
+                <span className="text-ctp-subtext0">[</span>
+                <span>rajan@neupane</span>
+                <span className="text-ctp-subtext0">]</span>
+              </a>
+            </div>
 
-      {/* Mobile Navigation */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm z-[9998] lg:hidden"
-              onClick={() => setIsOpen(false)}
-            />
-            <motion.nav
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 20 }}
-              className="fixed top-0 left-0 h-full w-64 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl z-[9999] lg:hidden"
-            >
-              <div className="flex flex-col items-start p-6 space-y-6">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeSection === item.href.substring(1);
-                  return (
-                    <motion.a
-                      key={item.name}
-                      href={item.href}
-                      className={`flex items-center space-x-3 transition-colors ${
-                        isActive 
-                          ? 'text-primary-500 dark:text-primary-400' 
-                          : 'text-gray-700 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400'
-                      }`}
-                      whileHover={{ x: 5 }}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.name}</span>
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeIndicator"
-                          className="absolute left-0 w-1 h-6 bg-primary-500 dark:bg-primary-400 rounded-r-full"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                        />
-                      )}
-                    </motion.a>
-                  );
-                })}
-              </div>
-            </motion.nav>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Desktop Navigation */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 h-screen z-[9999] hidden lg:block"
-      >
-        <div className="h-screen w-16 sm:w-20 md:w-24 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center space-y-8 p-4 rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeSection === item.href.substring(1);
-              return (
-                <motion.a
-                  key={item.name}
-                  href={item.href}
-                  className="group relative"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <div className={`p-3 rounded-xl backdrop-blur-sm border transition-colors ${
-                    isActive
-                      ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500/50 dark:border-primary-400/50'
-                      : 'bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50 hover:border-primary-500/50 dark:hover:border-primary-400/50'
-                  }`}>
-                    <Icon className={`w-6 h-6 transition-colors ${
+            {/* Center Module - Workspaces (Desktop) */}
+            <div className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeSection === item.href.substring(1);
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className={`px-3 py-1.5 text-xs font-mono flex items-center space-x-2 transition-all rounded ${
                       isActive
-                        ? 'text-primary-500 dark:text-primary-400'
-                        : 'text-gray-700 dark:text-gray-300 group-hover:text-primary-500 dark:group-hover:text-primary-400'
-                    }`} />
-                  </div>
-                  <span className="absolute left-full ml-4 px-3 py-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
-                    {item.name}
-                  </span>
-                </motion.a>
-              );
-            })}
+                        ? 'bg-ctp-surface1 text-ctp-teal border border-ctp-surface2'
+                        : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0'
+                    }`}
+                    title={item.name}
+                  >
+                    <span className={`${isActive ? 'text-ctp-teal' : 'text-ctp-overlay0'}`}>
+                      {item.workspace}
+                    </span>
+                    <Icon className="w-3.5 h-3.5" />
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* Right Module - System Status */}
+            <div className="flex items-center space-x-2">
+              {/* Time */}
+              <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-ctp-surface0 text-ctp-text font-mono text-xs rounded">
+                <ClockIcon className="w-3.5 h-3.5 text-ctp-blue" />
+                <span>{formatTime(currentTime)}</span>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="md:hidden p-1.5 bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text transition-colors rounded"
+              >
+                {isOpen ? (
+                  <XMarkIcon className="w-4 h-4" />
+                ) : (
+                  <Bars3Icon className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
+
+      {/* Mobile Navigation Menu */}
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-[9998] md:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="fixed top-10 left-0 right-0 bg-ctp-mantle/98 backdrop-blur-sm border-b border-ctp-surface0 z-[9999] md:hidden">
+            <div className="flex flex-col divide-y divide-ctp-surface0">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeSection === item.href.substring(1);
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className={`flex items-center space-x-3 px-4 py-3 text-sm font-mono transition-colors ${
+                      isActive
+                        ? 'text-ctp-teal bg-ctp-surface0'
+                        : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span className={`w-6 text-center ${isActive ? 'text-ctp-teal' : 'text-ctp-overlay0'}`}>
+                      {item.workspace}
+                    </span>
+                    <Icon className="w-4 h-4" />
+                    <span>{item.name}</span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
