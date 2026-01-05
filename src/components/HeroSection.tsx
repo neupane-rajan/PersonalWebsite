@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   GithubIcon, 
@@ -12,56 +12,6 @@ import MatrixRain from './MatrixRain';
 import AudioMotionVisualizer from './AudioMotionVisualizer';
 import MusicPlayer from './MusicPlayer';
 
-const typewriterColors = [
-  'text-ctp-teal',
-  'text-ctp-pink',
-  'text-ctp-mauve',
-  'text-ctp-blue',
-  'text-ctp-green',
-];
-
-function Typewriter({ words, speed = 120, loop = true }: { words: string[], speed?: number, loop?: boolean }) {
-  const [index, setIndex] = useState(0);
-  const [subIndex, setSubIndex] = useState(0);
-  const [reverse, setReverse] = useState(false);
-  const [colorIdx, setColorIdx] = useState(0);
-
-  useEffect(() => {
-    if (!words || words.length === 0) return;
-    if (index >= words.length) {
-      if (loop) {
-        setIndex(0);
-        setSubIndex(0);
-        setReverse(false);
-        setColorIdx((prev) => (prev + 1) % typewriterColors.length);
-      }
-      return;
-    }
-    if (subIndex === words[index].length + 1 && !reverse) {
-      setTimeout(() => setReverse(true), 1000);
-      return;
-    }
-    if (subIndex === 0 && reverse) {
-      setReverse(false);
-      setIndex((prev) => prev + 1);
-      setColorIdx((prev) => (prev + 1) % typewriterColors.length);
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setSubIndex((prev) => prev + (reverse ? -1 : 1));
-    }, reverse ? 40 : speed);
-    return () => clearTimeout(timeout);
-  }, [subIndex, index, reverse, words, speed, loop]);
-
-  if (!words || words.length === 0 || index >= words.length) return null;
-
-  return (
-    <span className={`transition-colors duration-300 font-semibold ${typewriterColors[colorIdx]}`}>
-      {`${words[index].substring(0, subIndex)}`}
-      <span className="border-r-2 border-ctp-teal animate-pulse ml-1" style={{ color: 'inherit' }} />
-    </span>
-  );
-}
 
 export default function HeroSection() {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
@@ -85,7 +35,7 @@ export default function HeroSection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="bg-ctp-mantle border-2 border-ctp-surface0 rounded-lg overflow-hidden shadow-2xl  flex flex-col relative group h-full max-h-[660px]">
+            <div className="bg-ctp-mantle border-2 border-ctp-surface0 rounded-lg overflow-hidden shadow-2xl  flex flex-col relative group h-full max-h-[380px] lg:max-h-[660px]">
               {/* Hyprland-style animated border glow */}
               <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
                 <div className="absolute inset-0 rounded-lg border-2 border-ctp-mauve/50 animate-pulse" />
@@ -139,11 +89,11 @@ export default function HeroSection() {
                     <div className="w-2.5 h-2.5 rounded-full bg-ctp-yellow"></div>
                     <div className="w-2.5 h-2.5 rounded-full bg-ctp-green"></div>
                   </div>
-                  <div className="flex items-center space-x-1.5 text-ctp-subtext0 text-[10px] font-mono">
-                    <Terminal className="w-2.5 h-2.5" />
+                  <div className="flex items-center space-x-2 text-ctp-subtext0 text-sm font-mono">
+                    <Terminal className="w-4 h-4" />
                     <span>rajan@portfolio:~</span>
                   </div>
-                  <div className="w-12 text-right text-ctp-overlay0 text-[9px] font-mono">bash</div>
+                  <div className="w-12 text-right text-ctp-overlay0 text-xs font-mono">bash</div>
                 </div>
 
                 {/* Terminal Content - Very Compact */}
@@ -166,7 +116,12 @@ export default function HeroSection() {
                       <span className="text-ctp-text">cat role.txt</span>
                     </div>
                     <div className="pl-3 text-sm">
-                      <Typewriter words={["Developer", "Self-learner"]} />
+                      <span className="text-ctp-teal font-semibold">Arch btw</span>
+                      <span className="text-ctp-overlay0 mx-2">|</span>
+                      <span className="text-ctp-teal font-semibold">Developer</span>
+                      <span className="text-ctp-overlay0 mx-2">|</span>
+                      <span className="text-ctp-pink font-semibold">Self-learner</span>
+
                     </div>
                   </div>
 
@@ -188,21 +143,21 @@ export default function HeroSection() {
                   </div>
 
                   {/* Social Links */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     {[
-                      { Icon: GithubIcon, href: 'https://github.com/neupane-rajan' },
-                      { Icon: LinkedinIcon, href: 'https://www.linkedin.com/in/rajan00' },
-                      { Icon: TwitterIcon, href: 'https://x.com/neupanehere' },
-                      { Icon: InstagramIcon, href: 'https://www.instagram.com/rajan0___0/' },
-                    ].map(({ Icon, href }, idx) => (
+                      { Icon: GithubIcon, href: 'https://github.com/neupane-rajan', color: 'hover:text-ctp-mauve' },
+                      { Icon: LinkedinIcon, href: 'https://www.linkedin.com/in/rajan00', color: 'hover:text-ctp-blue' },
+                      { Icon: TwitterIcon, href: 'https://x.com/neupanehere', color: 'hover:text-ctp-sky' },
+                      { Icon: InstagramIcon, href: 'https://www.instagram.com/rajan0___0/', color: 'hover:text-ctp-pink' },
+                    ].map(({ Icon, href, color }, idx) => (
                       <a
                         key={idx}
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 rounded bg-ctp-surface0 text-ctp-subtext0 hover:bg-ctp-surface1 hover:text-ctp-teal transition-colors"
+                        className={`p-2 rounded bg-ctp-surface0 text-ctp-text hover:bg-ctp-surface1 ${color} transition-all hover:scale-110`}
                       >
-                        <Icon className="w-3 h-3" />
+                        <Icon className="w-5 h-5" />
                       </a>
                     ))}
                   </div>

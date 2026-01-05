@@ -93,7 +93,7 @@ export default function ContactSection() {
                     <div className="flex items-center gap-3 group/item">
                         <span className="text-ctp-mauve w-6"><MapPin className="w-4 h-4" /></span>
                         <span className="text-ctp-overlay2 font-bold min-w-[80px]">Location:</span>
-                        <span className="text-ctp-text group-hover/item:text-ctp-mauve transition-colors">Kathmandu, Nepal</span>
+                        <span className="text-ctp-text group-hover/item:text-ctp-mauve transition-colors">Kailali, Nepal</span>
                     </div>
 
                     <div className="flex items-center gap-3 group/item">
