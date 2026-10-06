@@ -1,87 +1,117 @@
 import { useEffect, useRef } from 'react';
+import useInView from '../hooks/useInView';
 
-export default function MatrixRain() {
+// Half-width katakana + digits, like `cmatrix -c`
+const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789:.=*+-<>¦';
+const randomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+
+interface Stream {
+  y: number;      // head position in rows (float)
+  speed: number;  // rows per tick
+  length: number; // trail length in rows
+}
+
+interface MatrixRainProps {
+  fontSize?: number;
+}
+
+/**
+ * cmatrix, done properly: every column keeps its own grid of glyphs, a bright
+ * head leads a trail that fades from green to nothing, and glyphs inside the
+ * trail flicker. Only runs while visible.
+ */
+export default function MatrixRain({ fontSize = 14 }: MatrixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const active = useInView(canvasRef);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx || !active) return;
 
-    let animationFrameId: number;
-    let columns: number;
-    let drops: number[] = [];
-    const fontSize = 14;
-    const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let cols = 0;
+    let rows = 0;
+    let grid: string[][] = [];
+    let streams: Stream[] = [];
 
-    const setupCanvas = () => {
+    const newStream = (rows: number, scatter: boolean): Stream => ({
+      y: scatter ? Math.random() * rows : -Math.random() * rows * 0.5,
+      speed: 0.25 + Math.random() * 0.55,
+      length: Math.floor(rows * (0.4 + Math.random() * 0.8)) + 4,
+    });
+
+    const setup = () => {
       const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      
-      // Scale canvas for high-DPI displays
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
-
-      // Re-calculate columns based on new width
-      columns = Math.floor(rect.width / fontSize);
-      // Preserve existing drops or re-initialize
-      const newDrops = [];
-      for (let i = 0; i < columns; i++) {
-        newDrops[i] = drops[i] ?? Math.random() * -100;
-      }
-      drops = newDrops;
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cols = Math.ceil(width / (fontSize * 0.75));
+      rows = Math.ceil(height / fontSize);
+      grid = Array.from({ length: cols }, (_, c) => Array.from({ length: rows }, (_, r) => grid[c]?.[r] ?? randomGlyph()));
+      streams = Array.from({ length: cols }, (_, c) => streams[c] ?? newStream(rows, true));
     };
 
     const draw = () => {
-      // Background fade effect
-      ctx.fillStyle = 'rgba(30, 30, 46, 0.1)'; 
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const colW = fontSize * 0.75;
+      ctx.fillStyle = '#11111b';
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      ctx.font = `${fontSize}px "JetBrains Mono Variable", monospace`;
+      ctx.textBaseline = 'top';
 
-      ctx.fillStyle = '#a6e3a1'; // Catppuccin Green
-      ctx.font = `${fontSize}px monospace`;
-
-      for (let i = 0; i < drops.length; i++) {
-        const text = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
+      for (let c = 0; c < cols; c++) {
+        const s = streams[c];
+        const head = Math.floor(s.y);
+        for (let i = 0; i < s.length; i++) {
+          const r = head - i;
+          if (r < 0 || r >= rows) continue;
+          if (i > 0 && Math.random() < 0.02) grid[c][r] = randomGlyph();
+          if (i === 0) {
+            ctx.fillStyle = '#f5f5ff';
+            ctx.shadowColor = '#a6e3a1';
+            ctx.shadowBlur = 8;
+          } else {
+            const fade = 1 - i / s.length;
+            ctx.fillStyle = `rgba(166, 227, 161, ${(fade * fade * 0.95).toFixed(3)})`;
+            ctx.shadowBlur = 0;
+          }
+          ctx.fillText(grid[c][r], c * colW, r * fontSize);
         }
-        drops[i]++;
+        ctx.shadowBlur = 0;
+
+        s.y += s.speed;
+        if (head - s.length > rows) streams[c] = newStream(rows, false);
+        // the head writes a fresh glyph as it moves, like the real thing
+        if (head >= 0 && head < rows) grid[c][head] = randomGlyph();
       }
     };
 
-    // Control frame rate manually within requestAnimationFrame
-    let lastTime = 0;
-    const fps = 20; // Slower feels more "Matrix-like"
-    const interval = 1000 / fps;
+    setup();
+    const ro = new ResizeObserver(setup);
+    ro.observe(canvas);
 
-    const animate = (time: number) => {
-      const deltaTime = time - lastTime;
-      if (deltaTime > interval) {
+    if (reduceMotion) {
+      draw();
+      return () => ro.disconnect();
+    }
+
+    let raf = 0;
+    let last = 0;
+    const tick = (t: number) => {
+      if (t - last > 1000 / 30) {
         draw();
-        lastTime = time - (deltaTime % interval);
+        last = t;
       }
-      animationFrameId = requestAnimationFrame(animate);
+      raf = requestAnimationFrame(tick);
     };
-
-    setupCanvas();
-    window.addEventListener('resize', setupCanvas);
-    animationFrameId = requestAnimationFrame(animate);
+    raf = requestAnimationFrame(tick);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', setupCanvas);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
     };
-  }, []);
+  }, [active, fontSize]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="w-full h-full"
-      style={{ display: 'block', background: '#1e1e2e' }}
-    />
-  );
+  return <canvas ref={canvasRef} className="block h-full w-full bg-ctp-crust" aria-hidden="true" />;
 }

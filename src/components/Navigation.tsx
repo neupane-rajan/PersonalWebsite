@@ -1,171 +1,233 @@
-import { useState, useEffect } from 'react';
-import { 
-  HomeIcon, 
-  UserIcon, 
-  CodeBracketIcon, 
-  WrenchScrewdriverIcon, 
-  EnvelopeIcon,
-  Bars3Icon,
-  XMarkIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Battery, BatteryCharging, BatteryFull, BatteryLow, BatteryMedium,
+  Pause, Play, Volume1, Volume2, VolumeX, Wifi, WifiOff,
+} from 'lucide-react';
+import { SiArchlinux } from 'react-icons/si';
+import { HYPR_FOCUS_EVENT } from './HyprWindow';
+import { goToWorkspace, workspaces, type WorkspaceId } from '../data/workspaces';
+import { playlist, useMusic } from '../state/MusicContext';
 
-const navItems = [
-  { name: 'Home', icon: HomeIcon, href: '#home', workspace: '1' },
-  { name: 'About', icon: UserIcon, href: '#about', workspace: '2' },
-  { name: 'Projects', icon: CodeBracketIcon, href: '#projects', workspace: '3' },
-  { name: 'Skills', icon: WrenchScrewdriverIcon, href: '#skills', workspace: '4' },
-  { name: 'Contact', icon: EnvelopeIcon, href: '#contact', workspace: '5' },
-];
+/*
+ * A waybar config, rebuilt:
+ *   modules-left   = custom/launcher, hyprland/workspaces, hyprland/window
+ *   modules-center = clock
+ *   modules-right  = mpris, pulseaudio, network, battery
+ * Network and battery read the visitor's real status where the browser exposes it.
+ */
 
-export default function Navigation() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
-  const [currentTime, setCurrentTime] = useState(new Date());
+const time12 = (d: Date) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+const longDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+
+/** waybar's clock tooltip: a month calendar with today highlighted */
+function calendarHtml(d: Date) {
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const first = new Date(year, month, 1).getDay();
+  const days = new Date(year, month + 1, 0).getDate();
+  const title = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  let out = `${title.padStart(10 + Math.ceil(title.length / 2))}\nSu Mo Tu We Th Fr Sa\n${'   '.repeat(first)}`;
+  for (let day = 1; day <= days; day++) {
+    const cell = String(day).padStart(2);
+    out += day === d.getDate() ? `<span class="cal-today">${cell}</span>` : cell;
+    out += (first + day) % 7 === 0 ? '\n' : ' ';
+  }
+  return `<pre class="cal">${out.trimEnd()}</pre>`;
+}
+
+function Clock() {
+  const [now, setNow] = useState(new Date());
+  const [alt, setAlt] = useState(false);
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <button
+      className="wb-module text-ctp-blue"
+      onClick={() => setAlt((a) => !a)}
+      data-bs-toggle="tooltip"
+      data-bs-placement="bottom"
+      data-bs-html="true"
+      data-bs-title={calendarHtml(now)}
+      aria-label={`${time12(now)}, ${longDate(now)}. Click to switch format.`}
+    >
+      <span className="font-semibold">{alt ? longDate(now) : time12(now)}</span>
+    </button>
+  );
+}
+
+/** mpris: what's playing, click to play/pause */
+function Mpris() {
+  const { index, isPlaying, toggle } = useMusic();
+  const track = playlist[index];
+  return (
+    <button
+      onClick={toggle}
+      className="wb-module hidden max-w-[17rem] gap-2 text-ctp-green md:flex"
+      aria-label={isPlaying ? `Pause ${track.title}` : `Play ${track.title}`}
+    >
+      {isPlaying ? <Pause className="h-3 w-3 shrink-0" fill="currentColor" /> : <Play className="h-3 w-3 shrink-0" fill="currentColor" />}
+      <span className="truncate">{track.artist} - {track.title}</span>
+    </button>
+  );
+}
+
+/** pulseaudio: scroll to change the music volume, click to mute */
+function Pulseaudio() {
+  const { volume, muted, setVolume, toggleMute } = useMusic();
+  const ref = useRef<HTMLButtonElement>(null);
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
 
   useEffect(() => {
-    const handleScroll = () => {
-      const sections = navItems.map(item => item.href.substring(1));
-      const scrollPosition = window.scrollY + window.innerHeight / 3;
-
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
+    const el = ref.current;
+    if (!el) return;
+    // non-passive so the page doesn't scroll while adjusting volume
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setVolume(volumeRef.current + (e.deltaY < 0 ? 0.05 : -0.05));
     };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [setVolume]);
 
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
+  const pct = Math.round(volume * 100);
+  const Icon = muted || pct === 0 ? VolumeX : pct < 50 ? Volume1 : Volume2;
+  return (
+    <button
+      ref={ref}
+      onClick={toggleMute}
+      className={`wb-module gap-1.5 ${muted ? 'text-ctp-overlay1' : 'text-ctp-maroon'}`}
+      data-bs-toggle="tooltip"
+      data-bs-placement="bottom"
+      data-bs-title="Music volume. Scroll to change, click to mute."
+      aria-label={muted ? 'Unmute music' : `Music volume ${pct}%. Click to mute.`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      <span className="hidden sm:inline">{muted ? 'muted' : `${pct}%`}</span>
+    </button>
+  );
+}
 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+type NetworkInformation = { effectiveType?: string; addEventListener?: (t: string, f: () => void) => void; removeEventListener?: (t: string, f: () => void) => void };
 
-  // Update time every second
+function Network() {
+  const read = () => ({
+    online: navigator.onLine,
+    type: (navigator as Navigator & { connection?: NetworkInformation }).connection?.effectiveType,
+  });
+  const [net, setNet] = useState(read);
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const update = () => setNet(read());
+    const conn = (navigator as Navigator & { connection?: NetworkInformation }).connection;
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    conn?.addEventListener?.('change', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+      conn?.removeEventListener?.('change', update);
+    };
+  }, []);
+  return (
+    <span className={`wb-module hidden gap-1.5 sm:flex ${net.online ? 'text-ctp-teal' : 'text-ctp-red'}`}>
+      {net.online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+      <span>{net.online ? (net.type ?? 'online') : 'offline'}</span>
+    </span>
+  );
+}
 
-    return () => clearInterval(timer);
+type BatteryManager = EventTarget & { level: number; charging: boolean };
+
+/** battery: only shown when the browser exposes the Battery Status API */
+function BatteryModule() {
+  const [battery, setBattery] = useState<{ level: number; charging: boolean } | null>(null);
+  useEffect(() => {
+    const getBattery = (navigator as Navigator & { getBattery?: () => Promise<BatteryManager> }).getBattery;
+    if (!getBattery) return;
+    let manager: BatteryManager | null = null;
+    const update = () => manager && setBattery({ level: manager.level, charging: manager.charging });
+    getBattery.call(navigator).then((m) => {
+      manager = m;
+      update();
+      m.addEventListener('levelchange', update);
+      m.addEventListener('chargingchange', update);
+    }).catch(() => {});
+    return () => {
+      manager?.removeEventListener('levelchange', update);
+      manager?.removeEventListener('chargingchange', update);
+    };
   }, []);
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
-  };
+  if (!battery) return null;
+  const pct = Math.round(battery.level * 100);
+  const Icon = battery.charging ? BatteryCharging : pct > 80 ? BatteryFull : pct > 40 ? BatteryMedium : pct > 15 ? BatteryLow : Battery;
+  const color = battery.charging ? 'text-ctp-green' : pct <= 15 ? 'text-ctp-red' : pct <= 30 ? 'text-ctp-peach' : 'text-ctp-yellow';
+  return (
+    <span className={`wb-module hidden gap-1.5 sm:flex ${color}`} aria-label={`Battery ${pct}%${battery.charging ? ', charging' : ''}`}>
+      <Icon className="h-3.5 w-3.5" />
+      <span>{pct}%</span>
+    </span>
+  );
+}
+
+export default function Navigation({ active }: { active: WorkspaceId }) {
+  const [focusedTitle, setFocusedTitle] = useState<string | null>(null);
+
+  // Windows announce themselves on hover/focus, like hyprland/window
+  useEffect(() => {
+    const onFocus = (e: Event) => setFocusedTitle((e as CustomEvent<string | null>).detail);
+    window.addEventListener(HYPR_FOCUS_EVENT, onFocus);
+    return () => window.removeEventListener(HYPR_FOCUS_EVENT, onFocus);
+  }, []);
+
+  const title = focusedTitle ?? workspaces.find((w) => w.id === active)?.title;
 
   return (
-    <>
-      {/* Enhanced Waybar-style Top Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-[9999] bg-ctp-crust/95 backdrop-blur-sm border-b border-ctp-surface0">
-        <div className="max-w-full px-3">
-          <div className="flex items-center justify-between h-10">
-            
-            {/* Left Module - Logo */}
-            <div className="flex items-center space-x-2">
-              <a
-                href="#home"
-                className="px-3 py-1.5 bg-ctp-surface0 text-ctp-teal hover:bg-ctp-surface1 transition-colors font-mono font-semibold text-sm rounded"
-              >
-                <span className="text-ctp-subtext0">[</span>
-                <span>rajan@neupane</span>
-                <span className="text-ctp-subtext0">]</span>
-              </a>
-            </div>
-
-            {/* Center Module - Workspaces (Desktop) */}
-            <div className="hidden md:flex items-center space-x-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.href.substring(1);
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className={`px-3 py-1.5 text-xs font-mono flex items-center space-x-2 transition-all rounded ${
-                      isActive
-                        ? 'bg-ctp-surface1 text-ctp-teal border border-ctp-surface2'
-                        : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0'
-                    }`}
-                    title={item.name}
-                  >
-                    <span className={`${isActive ? 'text-ctp-teal' : 'text-ctp-overlay0'}`}>
-                      {item.workspace}
-                    </span>
-                    <Icon className="w-3.5 h-3.5" />
-                  </a>
-                );
-              })}
-            </div>
-
-            {/* Right Module - System Status */}
-            <div className="flex items-center space-x-2">
-              {/* Time */}
-              <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-ctp-surface0 text-ctp-text font-mono text-xs rounded">
-                <ClockIcon className="w-3.5 h-3.5 text-ctp-blue" />
-                <span>{formatTime(currentTime)}</span>
-              </div>
-
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="md:hidden p-1.5 bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text transition-colors rounded"
-              >
-                {isOpen ? (
-                  <XMarkIcon className="w-4 h-4" />
-                ) : (
-                  <Bars3Icon className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
+    <nav id="waybar" className="fixed inset-x-0 top-0 z-50 grid grid-cols-[1fr_auto] items-stretch text-[12.5px] lg:grid-cols-[1fr_auto_1fr]">
+      <div className="flex min-w-0 items-stretch">
+        <a href="#home" onClick={(e) => { e.preventDefault(); goToWorkspace('home'); }} className="wb-module text-ctp-blue hover:text-ctp-mauve" aria-label="Home">
+          <SiArchlinux className="h-4 w-4" />
+        </a>
+        <div className="flex items-stretch" role="navigation" aria-label="Workspaces">
+          {workspaces.map((ws, i) => (
+            <a
+              key={ws.id}
+              href={`#${ws.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                goToWorkspace(ws.id);
+              }}
+              className={`wb-ws${ws.id === active ? ' active' : ''}`}
+              aria-current={ws.id === active ? 'page' : undefined}
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title={`${ws.name} (${i + 1})`}
+              aria-label={ws.name}
+            >
+              {i + 1}
+            </a>
+          ))}
         </div>
-      </nav>
+        <span className="wb-module hidden min-w-0 text-ctp-subtext0 lg:flex">
+          <span className="truncate">{title}</span>
+        </span>
+      </div>
 
-      {/* Mobile Navigation Menu */}
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-[9998] md:hidden"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="fixed top-10 left-0 right-0 bg-ctp-mantle/98 backdrop-blur-sm border-b border-ctp-surface0 z-[9999] md:hidden">
-            <div className="flex flex-col divide-y divide-ctp-surface0">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.href.substring(1);
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className={`flex items-center space-x-3 px-4 py-3 text-sm font-mono transition-colors ${
-                      isActive
-                        ? 'text-ctp-teal bg-ctp-surface0'
-                        : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
-                    }`}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <span className={`w-6 text-center ${isActive ? 'text-ctp-teal' : 'text-ctp-overlay0'}`}>
-                      {item.workspace}
-                    </span>
-                    <Icon className="w-4 h-4" />
-                    <span>{item.name}</span>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
-    </>
+      <div className="hidden items-stretch justify-center lg:flex">
+        <Clock />
+      </div>
+
+      <div className="flex items-stretch justify-end">
+        <Mpris />
+        <Pulseaudio />
+        <Network />
+        <BatteryModule />
+        <span className="flex items-stretch lg:hidden">
+          <Clock />
+        </span>
+      </div>
+    </nav>
   );
 }

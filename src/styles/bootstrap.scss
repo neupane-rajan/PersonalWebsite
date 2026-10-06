@@ -1,0 +1,19 @@
+// Only the Bootstrap pieces this site uses. Reboot and the utility API are
+// left out on purpose: Tailwind's preflight and utilities own those jobs,
+// and pulling them in would clash with class names like .p-3 or .gap-2.
+
+$grid-gutter-width: 0.625rem; // matches Hyprland's gaps_in = 5
+
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/grid";      // .row / .col-* / .g-* — tiling layout
+@import "bootstrap/scss/badge";     // tech tags on projects
+@import "bootstrap/scss/tooltip";   // icon-only links and workspace buttons
+@import "bootstrap/scss/forms/labels";
+@import "bootstrap/scss/forms/form-control"; // the aerc compose window
